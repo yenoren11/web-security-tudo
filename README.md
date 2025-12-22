@@ -1,46 +1,102 @@
-![TUDO Favicon](https://github.com/bmdyy/tudo/blob/main/favicon.ico?raw=true)
+![](app/favicon.ico)
 
-# TUDO (Vulnerable PHP Web-App)
+# TUDO &mdash; A Vulnerable PHP Web App
 
-## MetaData
-* Author: William Moody (@bmdyy)
-* Started: 08.03.2021
-* Languages: PHP, PostgreSQL
-* Created as preparation for the OSWE/AWAE certification exam.
+## Introduction
 
-## Goals
-This is an intentionally vulnerable web application. There are 3 steps to complete the challenge, and multiple ways
+**TUDO** is an intentionally vulnerable web application that may be used to prepare for the **OSWE/AWAE** certification exam. Originally created in **March 2021**, many aspects of the challenge stopped working as the years went by, and so a major update was released in **December 2025** to address these. Everything works now, guaranteed!
+
+## Challenge
+
+There are **three steps** to complete the challenge, and multiple ways
 to complete each step.
 
-1. You must gain access to either user1, or user2's account (2 possible ways)
-2. Next, gain access to the admin account (1 possible ways)
-3. Finally, find a way to remotely execute arbitrary commands (5 possible ways)
+- **Authentication bypass:** Gain access to either `user1` or `user2`'s account (two possible ways).
+- **Privilege escalation:** Gain access to the `admin` account (one possible way).
+- **Remote code execution:** Find a way to remotely execute arbitrary commands (five possible ways &ndash; three of which were originally intended).
 
-I would suggest to try and find every way to get the most out of TUDO.
-Bonus: Create a python script which chains together all 3 steps for a complete POC.
+To make the most of **TUDO**, it is recommended to try and find all eight vulnerabilities, and to create a python script which chains three steps for a complete POC (_Hint: this is what they will require you to do on the exam_).
 
-*Note: The attack for step 2 may take up to a minute to complete, since the admin's actions
-are emulated with a cron job every minute on the target machine.*
+This challenge is intended to be treated like a **white-box penetration test**, so fire up [VS Code](https://github.com/microsoft/vscode), and read.
 
-This is intended as a **white-box** penetration test, so open up VSCode, and read.
+_Note: There is a cronjob emulating certain admin activity every minute._
 
-## Default Credentials
-* admin:admin
-* user1:user1
-* user2:user2
+_Note: To avoid spoilers, do not look inside the `docker` and `solutions` folders!_
+
+## Credentials
+
+You are provided with credentials for two standard users, as well as the administrator. _Remember, there are two possible authentication bypasses, so knowing these credentials is not necessary to "solve" TUDO. It does help to know which users exist though._
+
+| Type          | Username | Password |
+|---------------|----------|----------|
+| Standard user | user1    | user1    |
+| Standard user | user2    | user2    |
+| Administrator | admin    | admin    |
 
 ## How to begin?
-1. Clone the repo: `git clone https://github.com/bmdyy/tudo.git`
-2. Go into the directory: `cd tudo`
-3. Execute: `./RUNME.sh`
-4. Look in the terminal output and you should see an IP address: `AH00558: apache2: ... 172.17.0.2 ...'`
-That is the target!
 
-*Note: If you want to shutdown the container, you may use `KILL.sh` for convenience.*
+Clone the repository, and use [Docker Compose](https://docs.docker.com/compose/install/linux/) to launch the challenge:
 
-*Note 2: I included `SHELL.sh` as a quick way to run a shell for the docker container*
+```console
+$ git clone https://github.com/bmdyy/tudo.git
+$ cd tudo
+$ docker compose up -d
+```
+
+The target will be accessible at [http://localhost:8000](http://localhost:8000).
+
+![](./screenshots/login.png)
+
+To stop the challenge, run:
+
+```console
+$ docker compose down
+```
+
+If you need to reset the challenge, run this while the containers are down:
+
+```console
+$ docker system prune -f
+```
+
+_Good luck!_
+
+### PHP remote debugging
+
+The challenge is already set up for remote debugging using [Xdebug](https://xdebug.org/) and [VS Code](https://code.visualstudio.com/). Assuming you opened the **root folder** in Code and not **app**, simply hit `[F5]` to start debugging.
+
+![](screenshots/debugging.png)
+
+_Note: If for some reason your host machine's Docker IP is **not** `172.17.0.1`, make sure to update `hostname` in `.vscode/launch.json`_
+
+### Viewing PostgreSQL query log
+
+All PgSQL queries are automatically written to the database container's log file. To view it, run the following command:
+
+```console
+$ docker logs -f tudo-db
+```
+
+### Interacting with the database
+
+You can interact with the PostgreSQL database via `psql` with the following command:
+
+```console
+$ docker exec -it tudo-db psql -U postgres tudo
+psql (18.1 (Debian 18.1-1.pgdg13+2))
+Type "help" for help.
+
+tudo=# \dt
+             List of tables
+ Schema |    Name     | Type  |  Owner   
+--------+-------------+-------+----------
+ public | class_posts | table | postgres
+ public | motd_images | table | postgres
+ public | tokens      | table | postgres
+ public | users       | table | postgres
+(4 rows)
+```
 
 ## Solutions
-There are explanations and solutions for all (intended) ways to solve this machine in `/solution`.
 
-**And finally, good luck!**
+There are POCs and explanations for all the various ways to solve **TUDO** in [solutions](solutions/).

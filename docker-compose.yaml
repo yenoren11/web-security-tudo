@@ -1,0 +1,23 @@
+services:
+  app:
+    container_name: tudo-app
+    build: 
+      context: .
+      dockerfile: docker/app/Dockerfile
+    ports:
+      - "8000:80"
+    extra_hosts:
+      host.docker.internal: host-gateway # Automatically resolves host IP (used by Xdebug)
+  db:
+    container_name: tudo-db
+    image: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=tudo
+    volumes:
+      - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: ["postgres", "-c", "log_statement=all"]
+  admin:
+    container_name: tudo-admin
+    build: docker/admin
