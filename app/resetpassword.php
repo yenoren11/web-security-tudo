@@ -6,12 +6,18 @@
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        include('includes/db_connect.php');
-        $ret = pg_prepare($db, "checktoken_query", "select * from tokens where token = $1");
-        $ret = pg_execute($db, "checktoken_query", array($_GET['token']));
-
-        if (pg_num_rows($ret) === 0) {
+        if (!isset($_GET['token']) || empty($_GET['token'])) {
             $invalid_token = true;
+        } else {
+            // Mã thông báo đến được băm trước khi tra cứu trong cơ sở dữ liệu vì cơ sở dữ liệu chỉ lưu trữ mã băm của mã thông báo. 
+            // Điều này có nghĩa là ngay cả khi cơ sở dữ liệu bị rò rỉ, các mã thông báo đặt lại vẫn an toàn vì chúng không được lưu trữ ở dạng có thể sử dụng được.
+            $token_hash = hash('sha256', $_GET['token']);
+            include('includes/db_connect.php');
+            $ret = pg_query_params($db, "select tid, uid from tokens where token = $1", array($token_hash));
+
+            if (pg_num_rows($ret) === 0) {
+                $invalid_token = true;
+            }
         }
     }
     else if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -29,8 +35,9 @@
         }
         else {
             include('includes/db_connect.php');
-            $ret = pg_prepare($db, "checktoken_query", "select * from tokens where token = $1");
-            $ret = pg_execute($db, "checktoken_query", array($token));
+            // So sánh mã băm (token) với giá trị trong cơ sở dữ liệu, không bao giờ so sánh với token thô.
+            $token_hash = hash('sha256', $token);
+            $ret = pg_query_params($db, "select tid, uid from tokens where token = $1", array($token_hash));
 
             if (pg_num_rows($ret) === 0) {
                 $invalid_token = true;
@@ -38,11 +45,10 @@
                 $uid = pg_fetch_row($ret)[1];
                 $newpass = hash('sha256', $password1);
 
-                $ret = pg_prepare($db, "changepassword_query", "update users set password = $1 where uid = $2");
-                $ret = pg_execute($db, "changepassword_query", array($newpass, $uid));
+                $ret = pg_query_params($db, "update users set password = $1 where uid = $2", array($newpass, $uid));
 
-                $ret = pg_prepare($db, "deletetoken_query", "delete from tokens where token = $1");
-                $ret = pg_execute($db, "deletetoken_query", array($token));
+                // Mã xác thực dùng một lần: sẽ bị xóa sau khi đặt lại mật khẩu thành công.
+                $ret = pg_query_params($db, "delete from tokens where token = $1", array($token_hash));
 
                 $success = true;
             }

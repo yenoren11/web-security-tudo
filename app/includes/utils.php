@@ -1,12 +1,7 @@
 <?php
     function generateToken() {
-        srand(round(microtime(true) * 1000));
-        $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_';
-        $ret = '';
-        for ($i = 0; $i < 32; $i++) {
-            $ret .= $chars[rand(0,strlen($chars)-1)];
-        }
-        return $ret;
+         // Mã token CSPRNG dùng cho liên kết đặt lại mật khẩu.
+        return bin2hex(random_bytes(32));
     }
 
     class User {
