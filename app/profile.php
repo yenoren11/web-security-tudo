@@ -5,12 +5,17 @@
         die();
     } 
 
+    function e($value) {
+        return htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!isset($_POST['description'])) {
             $error = true;
         }
         else {
-            $description = $_POST['description'];
+            // Loại bỏ các thẻ HTML khi nhập liệu để giảm thiểu nguy cơ tấn công XSS lưu trữ.
+            $description = trim(strip_tags($_POST['description']));
             
             include('includes/db_connect.php');
             $ret = pg_prepare($db, "updatedescription_query", "update users set description = $1 where username = $2");
@@ -36,12 +41,13 @@
             ?>
             <h1>My Profile:</h1>
             <form action="profile.php" method="POST">
+                // escape khi hiển thị (kể cả trong attribute HTML) để payload script không chạy nữa.
                 <label for="username">Username: </label>
-                <input name="username" value="<?php echo $row[1]; ?>" disabled><br><br>
+                <input name="username" value="<?php echo e($row[1]); ?>" disabled><br><br>
                 <label for="password">Password: </label>
-                <input name="password" value="<?php echo $row[2]; ?>" disabled><br><br>
+                <input name="password" value="<?php echo e($row[2]); ?>" disabled><br><br>
                 <label for="description">Description: </label>
-                <input name="description" value="<?php echo $row[3]; ?>"><br><br>
+                <input name="description" value="<?php echo e($row[3]); ?>"><br><br>
                 <input type="submit" value="Update"> 
                 <?php if (isset($error)) {echo '<span style="color:red">Error</span>';} 
                 else if (isset($success)) {echo '<span style="color:green">Success</span>';} ?>

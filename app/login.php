@@ -1,4 +1,9 @@
 <?php
+    // Tăng cường bảo mật cookie phiên để chống lại việc truy cập tập lệnh và tấn công xuyên trang kiểu CSRF.
+    session_set_cookie_params(array(
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ));
     session_start();
     if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] == true) {
         header('location: /index.php');
@@ -13,6 +18,8 @@
         $ret = pg_execute($db, "login_query", array($_POST['username'], $password));
 
         if (pg_num_rows($ret) === 1) {
+            // Xoay vòng ID phiên sau khi xác thực để tránh bị khóa.
+            session_regenerate_id(true);
             $_SESSION['loggedin'] = true;
             $_SESSION['username'] = $_POST['username'];
 

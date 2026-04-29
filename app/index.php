@@ -4,6 +4,10 @@
         header('location: /login.php');
         die();
     } 
+
+    function e($value) {
+        return htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
 ?>
 
 <html>
@@ -24,11 +28,10 @@
                     echo '<tr><th>Uid</th><th>Username</th><th>Password (SHA256)</th><th>Description</th></tr>';
                     while ($row = pg_fetch_row($ret)) {
                         echo '<tr>';
-                        echo '<td>'.$row[0].'</td>';
-                        echo '<td>'.$row[1].'</td>';
-                        echo '<td>'.$row[2].'</td>';
-                        echo '<td>'.$row[3].'</td>';
-                        echo '</tr>';
+                        echo '<td>'.e($row[0]).'</td>';
+                        echo '<td>'.e($row[1]).'</td>';
+                        echo '<td>'.e($row[2]).'</td>';
+                        echo '<td>'.e($row[3]).'</td>';
                     }
                     echo '</table><br>';
                     echo '<b>Import user:</b> <br>';
@@ -58,7 +61,8 @@
                     include('includes/db_connect.php');
                     $ret = pg_query($db, "select * from motd_images order by iid desc limit 3;");
                     while($row = pg_fetch_row($ret)) {
-                        echo '<figure><img src="'.$row[1].'" /><figcaption>'.$row[2].'</figcaption></figure>';
+                        // Mã hóa đường dẫn/tiêu đề hình ảnh để chặn việc chèn mã độc vào nội dung do quản trị viên quản lý.
+                        echo '<figure><img src="'.e($row[1]).'" /><figcaption>'.e($row[2]).'</figcaption></figure>';
                     }
 
                     echo '</div>';
