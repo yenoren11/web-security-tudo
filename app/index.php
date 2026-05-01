@@ -32,6 +32,7 @@
                         echo '<td>'.e($row[1]).'</td>';
                         echo '<td>'.e($row[2]).'</td>';
                         echo '<td>'.e($row[3]).'</td>';
+                        echo '</tr>';
                     }
                     echo '</table><br>';
                     echo '<b>Import user:</b> <br>';
@@ -54,7 +55,17 @@
 
                     require 'vendor/autoload.php';
                     $smarty = new Smarty();
+                    // Hiển thị phòng thủ: ngăn chặn việc thực thi các thẻ PHP trong mẫu Smarty.
+                    $smarty->security = true;
+                    $smarty->php_handling = 2; // SMARTY_PHP_REMOVE
+
+                    $motd_message = "";
+                    $motd_message_path = __DIR__ . "/templates/motd_message.txt";
+                    if (file_exists($motd_message_path)) {
+                        $motd_message = file_get_contents($motd_message_path);
+                    }
                     $smarty->assign("username", $_SESSION['username']);
+                    $smarty->assign("motd_message", $motd_message);
                     $smarty->force_compile = true;
                     echo $smarty->fetch("motd.tpl").'<br>';
                     

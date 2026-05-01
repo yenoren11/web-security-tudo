@@ -1,6 +1,6 @@
 <?php
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-        if ($_FILES['image']) {
+        if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
             $validfile = true;
 
             $is_check = getimagesize($_FILES['image']['tmp_name']);
@@ -10,7 +10,7 @@
             }
 
             $illegal_ext = Array("php","pht","phtm","phtml","phpt","pgif","phps","php2","php3","php4","php5","php6","php7","php16","inc");
-            $file_ext = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+            $file_ext = strtolower(pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION));
             if (in_array($file_ext, $illegal_ext)) {
                 $validfile = false;
                 echo 'Illegal file extension<br>';
@@ -25,7 +25,7 @@
 
             if ($validfile) {
                 $path = basename($_FILES['image']['name']);
-                $title = htmlentities($_POST['title']);
+                $title = trim(strip_tags(isset($_POST['title']) ? $_POST['title'] : ''));
 
                 move_uploaded_file($_FILES['image']['tmp_name'], '../images/'.$path);
 
