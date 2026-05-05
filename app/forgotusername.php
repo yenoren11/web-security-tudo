@@ -5,7 +5,7 @@
         die();
     }
 
-    // Giới hạn số lần thử lặp lại để làm chậm quá trình đoán tên người dùng bằng phương pháp vét cạn.
+    // Giới hạn số lần thử lặp lại để làm chậm quá trình brute-force.
     function rate_limit_forgot_username() {
         $window_seconds = 300;
         $max_attempts = 5;
@@ -37,8 +37,19 @@
             $rate_limited = true;
         } else {
             include('includes/db_connect.php');
-            // Truy vấn tham số hóa ngăn chặn tấn công SQL injection và cũng không tiết lộ thông tin về việc tên người dùng tồn tại hay không.
+
+            // --- CODE BAN ĐẦU (Vulnerable - SQL Injection) ---
+            // Code này cho phép kẻ tấn công chèn lệnh SQL trực tiếp qua biến $username.
+            /*
+            $query = "select uid from users where username = '" . $username . "' limit 1";
+            pg_query($db, $query);
+            */
+
+            // --- CODE ĐÃ SỬA (Secured - Prepared Statements) ---
+            // Truy vấn tham số hóa giúp ngăn chặn hoàn toàn SQL injection. 
+            // Dữ liệu từ $username sẽ được xử lý như một chuỗi thuần túy, không phải lệnh thực thi.
             pg_query_params($db, "select uid from users where username = $1 limit 1", array($username));
+            
             $success = true;
         }
     }
@@ -63,7 +74,7 @@
                     if (isset($rate_limited)) {
                         echo "<span style='color:red'>Too many attempts. Please try again in a few minutes.</span>";
                     } else if (isset($success)) {
-                        // Thông báo chung chung để kẻ tấn công không thể xác nhận xem tên người dùng có tồn tại hay không.
+                        // Thông báo chung chung để kẻ tấn công không thể xác nhận sự tồn tại của tài khoản (Prevent Information Enumeration).
                         echo "<span style='color:green'>If the account exists, recovery instructions have been sent.</span>";
                     }
                 ?>
